@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WeatherNow | Home</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>🌦️ WeatherNow</h1>
+    <nav>
+      <a href="index.html" class="active">Home</a>
+      <a href="about.html">About</a>
+      <a href="features.html">Features</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <h2>Get Live Weather Updates Instantly</h2>
+    <p>Check the weather for any city around the world.</p>
+  </section>
+
+  <section class="weather-section">
+    <input id="cityInput" type="text" placeholder="Enter city name (e.g., Lagos)" />
+    <button id="getWeatherBtn">Get Weather</button>
+    <button id="geoBtn">Use My Location</button>
+
+    <div class="weather-card" id="weatherCard">
+      <h3 id="cityName"></h3>
+      <div id="iconContainer"></div>
+      <p id="description"></p>
+      <p><strong>Temperature:</strong> <span id="temp"></span>°C</p>
+      <p><strong>Humidity:</strong> <span id="humidity"></span>%</p>
+      <p><strong>Wind Speed:</strong> <span id="wind"></span> m/s</p>
+      <p class="note" id="note"></p>
+    </div>
+  </section>
+
+  <footer>
+    <p>© 2025 WeatherNow | <a href="about.html">Learn More</a></p>
+  </footer>
+
+  <script>// ==========================
+// WEATHERNOW - Main JavaScript
+// ==========================
+
+// ✅ Your OpenWeather API Key
+const API_KEY = "266c6537d206a7555d1e487494e2a82b";
+
+// Select HTML elements
+const cityInput = document.getElementById("cityInput");
+const getWeatherBtn = document.getElementById("getWeatherBtn");
+const geoBtn = document.getElementById("geoBtn");
+const weatherCard = document.getElementById("weatherCard");
+const cityName = document.getElementById("cityName");
+const iconContainer = document.getElementById("iconContainer");
+const description = document.getElementById("description");
+const temp = document.getElementById("temp");
+const humidity = document.getElementById("humidity");
+const wind = document.getElementById("wind");
+const note = document.getElementById("note");
+
+// Hide weather card initially
+if (weatherCard) weatherCard.style.display = "none";
+
+// ---------------------------
+// 🔹 Get Weather by City Name
+// ---------------------------
+if (getWeatherBtn && cityInput) {
+  getWeatherBtn.addEventListener("click", () => {
+    const city = cityInput.value.trim();
+    if (city === "") {
+      alert("⚠️ Please enter a city name!");
+      return;
+    }
+    getWeatherByCity(city);
+  });
+}
+
+// ---------------------------
+// 🔹 Get Weather by Geolocation
+// ---------------------------
+if (geoBtn) {
+  geoBtn.addEventListener("click", () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    note.textContent = "⏳ Getting your location...";
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        getWeatherByCoords(lat, lon);
+      },
+      (error) => {
+        alert("Unable to retrieve your location: " + error.message);
+        note.textContent = "";
+      }
+    );
+  });
+}
+
+// ---------------------------
+// 🌍 Fetch Weather by City
+// ---------------------------
+async function getWeatherByCity(city) {
+  note.textContent = "⏳ Fetching weather data...";
+  try {
+    const response = await fetch(
+      `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric`
+    );
+
+    if (!response.ok) {
+      throw new Error("City not found. Please check spelling!");
+    }
+
+    const data = await response.json();
+    displayWeather(data);
+  } catch (error) {
+    alert("❌ " + error.message);
+    note.textContent = "Error fetching weather data.";
+  }
+}
+
+// ---------------------------
+// 📍 Fetch Weather by Coordinates
+// ---------------------------
+async function getWeatherByCoords(lat, lon) {
+  note.textContent = "⏳ Fetching weather for your location...";
+  try {
+    const response = await fetch(
+      `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`
+    );
+
+    if (!response.ok) {
+      throw new Error("Unable to fetch weather data.");
+    }
+
+    const data = await response.json();
+    displayWeather(data);
+  } catch (error) {
+    alert("❌ " + error.message);
+    note.textContent = "Error fetching weather data.";
+  }
+}
+
+// ---------------------------
+// 🌤️ Display Weather on Page
+// ---------------------------
+function displayWeather(data) {
+  weatherCard.style.display = "block";
+  cityName.textContent = `${data.name}, ${data.sys.country}`;
+  description.textContent = data.weather[0].description;
+  temp.textContent = Math.round(data.main.temp);
+  humidity.textContent = data.main.humidity;
+  wind.textContent = data.wind.speed;
+
+  const iconCode = data.weather[0].icon;
+  iconContainer.innerHTML = `<img src="https://openweathermap.org/img/wn/${iconCode}@2x.png" alt="Weather icon">`;
+
+  note.textContent = "✅ Live weather data fetched successfully!";
+}</script>
+</body>
+</html>
